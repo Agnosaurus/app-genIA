@@ -41,9 +41,11 @@ public class JavaFxApplication extends Application {
 
     @Override
     public void stop() {
-        PersistenceService persistenceService = springContext.getBean(PersistenceService.class);
-        persistenceService.saveToFile();
-        springContext.close();
+        if (springContext != null && springContext.isActive()) {
+            PersistenceService persistenceService = springContext.getBean(PersistenceService.class);
+            persistenceService.saveToFile();
+            springContext.close();
+        }
         Platform.exit();
     }
 }
