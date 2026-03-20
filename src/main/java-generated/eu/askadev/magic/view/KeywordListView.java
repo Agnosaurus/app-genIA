@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class KeywordListView {
 
     private final KeywordController controller;
-    private ListView<Keyword> listView;
+    private TableView<Keyword> tableView;
 
     public KeywordListView(KeywordController controller) {
         this.controller = controller;
@@ -29,14 +29,12 @@ public class KeywordListView {
         Label title = new Label("Keywords");
         title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
 
-        listView = new ListView<>();
-        listView.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(Keyword item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getValue());
-            }
-        });
+        tableView = new TableView<>();
+        
+        TableColumn<Keyword, String> valueCol = new TableColumn<>("Value");
+        valueCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getValue()));
+        
+        tableView.getColumns().add(valueCol);
         refreshList();
 
         Button addBtn = new Button("Add New");
@@ -44,16 +42,16 @@ public class KeywordListView {
 
         Button deleteBtn = new Button("Delete");
         deleteBtn.setOnAction(e -> {
-            Keyword selected = listView.getSelectionModel().getSelectedItem();
+            Keyword selected = tableView.getSelectionModel().getSelectedItem();
             if (selected != null) {
                 controller.delete(selected.getId());
                 refreshList();
             }
         });
 
-        listView.setOnMouseClicked(event -> {
+        tableView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
-                Keyword selected = listView.getSelectionModel().getSelectedItem();
+                Keyword selected = tableView.getSelectionModel().getSelectedItem();
                 if (selected != null) showEditDialog(selected);
             }
         });
@@ -65,13 +63,13 @@ public class KeywordListView {
         }));
 
         HBox buttons = new HBox(10, addBtn, deleteBtn, backBtn);
-        root.getChildren().addAll(title, listView, buttons);
+        root.getChildren().addAll(title, tableView, buttons);
 
         return root;
     }
 
     private void refreshList() {
-        listView.setItems(FXCollections.observableArrayList(controller.findAll()));
+        tableView.setItems(FXCollections.observableArrayList(controller.findAll()));
     }
 
     private void showEditDialog(Keyword keyword) {

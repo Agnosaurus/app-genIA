@@ -2,6 +2,7 @@ package eu.askadev.magic.view;
 
 import eu.askadev.magic.controller.ConceptController;
 import eu.askadev.magic.model.Concept;
+import eu.askadev.magic.model.Keyword;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -12,11 +13,13 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 
+import java.util.stream.Collectors;
+
 @Component
 public class ConceptListView {
 
     private final ConceptController controller;
-    private ListView<Concept> listView;
+    private TableView<Concept> tableView;
 
     public ConceptListView(ConceptController controller) {
         this.controller = controller;
@@ -29,14 +32,20 @@ public class ConceptListView {
         Label title = new Label("Concepts");
         title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
 
-        listView = new ListView<>();
-        listView.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(Concept item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getValue());
-            }
+        tableView = new TableView<>();
+        
+        TableColumn<Concept, String> nameCol = new TableColumn<>("Name");
+        nameCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getValue()));
+        
+        TableColumn<Concept, String> keywordsCol = new TableColumn<>("Keywords");
+        keywordsCol.setCellValueFactory(data -> {
+            String keywords = data.getValue().getKeywords().stream()
+                .map(Keyword::getValue)
+                .collect(Collectors.joining(", "));
+            return new javafx.beans.property.SimpleStringProperty(keywords);
         });
+        
+        tableView.getColumns().addAll(nameCol, keywordsCol);
         refreshList();
 
         Button addBtn = new Button("Add New");
@@ -44,16 +53,16 @@ public class ConceptListView {
 
         Button deleteBtn = new Button("Delete");
         deleteBtn.setOnAction(e -> {
-            Concept selected = listView.getSelectionModel().getSelectedItem();
+            Concept selected = tableView.getSelectionModel().getSelectedItem();
             if (selected != null) {
                 controller.delete(selected.getId());
                 refreshList();
             }
         });
 
-        listView.setOnMouseClicked(event -> {
+        tableView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
-                Concept selected = listView.getSelectionModel().getSelectedItem();
+                Concept selected = tableView.getSelectionModel().getSelectedItem();
                 if (selected != null) showEditDialog(selected);
             }
         });
@@ -65,13 +74,13 @@ public class ConceptListView {
         }));
 
         HBox buttons = new HBox(10, addBtn, deleteBtn, backBtn);
-        root.getChildren().addAll(title, listView, buttons);
+        root.getChildren().addAll(title, tableView, buttons);
 
         return root;
     }
 
     private void refreshList() {
-        listView.setItems(FXCollections.observableArrayList(controller.findAll()));
+        tableView.setItems(FXCollections.observableArrayList(controller.findAll()));
     }
 
     private void showEditDialog(Concept concept) {
