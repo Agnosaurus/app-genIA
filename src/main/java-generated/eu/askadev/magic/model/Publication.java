@@ -811,4 +811,9 @@ public class Publication {
     public void setLegislativeBody(String legislativeBody) {
         this.legislativeBody = legislativeBody;
     }
+
+    @Override
+    public String toString() {
+        return key;
+    }
 }

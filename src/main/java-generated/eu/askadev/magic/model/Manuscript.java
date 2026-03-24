@@ -111,4 +111,9 @@ public class Manuscript {
     public void setScriptorium(String scriptorium) {
         this.scriptorium = scriptorium;
     }
+
+    @Override
+    public String toString() {
+        return uniqueId;
+    }
 }

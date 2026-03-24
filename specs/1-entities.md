@@ -200,5 +200,8 @@ public class Variant {
 # Additional methods
 variant.getName // return the name
 
+-**All entities should have a public String toString() method**
+-**Those methods will return the most significant String data of the entity. EG Name, uniqueId **
+
 
 

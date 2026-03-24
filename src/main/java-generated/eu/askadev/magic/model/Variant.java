@@ -41,4 +41,9 @@ public class Variant {
     public void setName(Name name) {
         this.name = name;
     }
+
+    @Override
+    public String toString() {
+        return variant;
+    }
 }

@@ -41,4 +41,9 @@ public class Name {
     public void setLang(Language lang) {
         this.lang = lang;
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

@@ -44,4 +44,9 @@ public class Concept {
     public void setKeywords(Set<Keyword> keywords) {
         this.keywords = keywords;
     }
+
+    @Override
+    public String toString() {
+        return value;
+    }
 }
