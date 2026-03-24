@@ -7,6 +7,7 @@ import eu.askadev.magic.model.Keyword;
 import javafx.collections.FXCollections;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -114,6 +115,21 @@ public class ConceptListView {
         tableView.setItems(FXCollections.observableArrayList(controller.findAll()));
     }
 
+    private VBox createFieldGroup(String title, Node... fieldPairs) {
+        VBox group = new VBox(10);
+        group.setStyle("-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 4; -fx-padding: 15; -fx-background-color: #fafafa;");
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 10 0;");
+        group.getChildren().add(titleLabel);
+
+        for (Node field : fieldPairs) {
+            group.getChildren().add(field);
+        }
+
+        return group;
+    }
+
     private void refreshDetailView() {
         detailView.getChildren().clear();
 
@@ -131,10 +147,15 @@ public class ConceptListView {
         ComboBox<Object> keywordsCombo = (ComboBox<Object>) keywordsComboWrapper.getChildren().get(1);
 
         ScrollPane scrollPane = new ScrollPane();
-        VBox content = new VBox(10,
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #ffffff;");
+
+        VBox basicInfo = createFieldGroup("Concept Information",
                 new Label("Value:"), valueField,
                 new Label("Keywords:"), keywordsComboWrapper);
-        content.setPadding(new Insets(10));
+
+        content.getChildren().add(basicInfo);
         scrollPane.setContent(content);
         detailView.getChildren().add(scrollPane);
 

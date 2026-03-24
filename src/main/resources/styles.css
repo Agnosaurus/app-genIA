@@ -1,0 +1,326 @@
+/* General Styles */
+* {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+.root {
+    -fx-font-size: 12px;
+    -fx-text-fill: #333333;
+    -fx-background-color: #f5f5f5;
+}
+
+/* Labels */
+Label {
+    -fx-text-fill: #333333;
+    -fx-font-size: 12px;
+}
+
+Label.title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a1a1a;
+}
+
+Label.section-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+    -fx-padding: 10 0 5 0;
+}
+
+/* Text Fields */
+TextField, TextArea {
+    -fx-border-color: #d0d0d0;
+    -fx-border-radius: 4;
+    -fx-border-width: 1;
+    -fx-padding: 8px;
+    -fx-font-size: 12px;
+    -fx-control-inner-background: #ffffff;
+    -fx-text-fill: #333333;
+}
+
+TextField:focused, TextArea:focused {
+    -fx-border-color: #0078d4;
+    -fx-border-width: 2;
+    -fx-control-inner-background: #fafafa;
+}
+
+TextField:disabled, TextArea:disabled {
+    -fx-opacity: 0.6;
+    -fx-control-inner-background: #f0f0f0;
+}
+
+/* ComboBox */
+.combo-box {
+    -fx-border-color: #d0d0d0;
+    -fx-border-radius: 4;
+    -fx-border-width: 1;
+    -fx-padding: 8px;
+    -fx-font-size: 12px;
+}
+
+.combo-box:focused {
+    -fx-border-color: #0078d4;
+    -fx-border-width: 2;
+}
+
+.combo-box:disabled {
+    -fx-opacity: 0.6;
+}
+
+.combo-box-popup .list-view {
+    -fx-border-color: #d0d0d0;
+    -fx-border-width: 1;
+    -fx-padding: 0;
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-padding: 8px;
+    -fx-text-fill: #333333;
+}
+
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: #e8f4f8;
+}
+
+.combo-box-popup .list-view .list-cell:filled:selected {
+    -fx-background-color: #0078d4;
+    -fx-text-fill: #ffffff;
+}
+
+/* Buttons */
+Button {
+    -fx-padding: 10px 20px;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-border-radius: 4;
+    -fx-cursor: hand;
+}
+
+Button:default {
+    -fx-background-color: #0078d4;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #0078d4;
+    -fx-border-width: 1;
+}
+
+Button:default:hover {
+    -fx-background-color: #106ebe;
+    -fx-border-color: #106ebe;
+}
+
+Button:default:pressed {
+    -fx-background-color: #005a9e;
+    -fx-border-color: #005a9e;
+}
+
+Button:focused {
+    -fx-focus-color: #0078d4;
+    -fx-faint-focus-color: #0078d424;
+}
+
+/* Secondary Button */
+.button-secondary {
+    -fx-background-color: #f0f0f0;
+    -fx-text-fill: #333333;
+    -fx-border-color: #d0d0d0;
+    -fx-border-width: 1;
+}
+
+.button-secondary:hover {
+    -fx-background-color: #e0e0e0;
+    -fx-border-color: #b0b0b0;
+}
+
+/* Delete Button */
+.button-danger {
+    -fx-background-color: #da3633;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #da3633;
+    -fx-border-width: 1;
+}
+
+.button-danger:hover {
+    -fx-background-color: #c5221f;
+    -fx-border-color: #c5221f;
+}
+
+/* TableView */
+.table-view {
+    -fx-border-color: #d0d0d0;
+    -fx-border-width: 1;
+    -fx-background-color: #ffffff;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #f0f0f0;
+}
+
+.table-view .column-header {
+    -fx-background-color: #f0f0f0;
+    -fx-border-color: #d0d0d0;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+.table-view .table-cell {
+    -fx-padding: 8px;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 0 0 1 0;
+    -fx-text-fill: #333333;
+}
+
+.table-view .table-row-cell {
+    -fx-padding: 0;
+    -fx-background-color: #ffffff;
+}
+
+.table-view .table-row-cell:hover {
+    -fx-background-color: #f9f9f9;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: #e8f4f8;
+}
+
+.table-view .table-row-cell:selected .table-cell {
+    -fx-text-fill: #0078d4;
+}
+
+/* ListView */
+.list-view {
+    -fx-border-color: #d0d0d0;
+    -fx-border-width: 1;
+    -fx-background-color: #ffffff;
+    -fx-padding: 0;
+}
+
+.list-view .list-cell {
+    -fx-padding: 12px;
+    -fx-text-fill: #333333;
+    -fx-background-color: #ffffff;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.list-view .list-cell:hover {
+    -fx-background-color: #f9f9f9;
+}
+
+.list-view .list-cell:filled:selected {
+    -fx-background-color: #e8f4f8;
+    -fx-text-fill: #0078d4;
+    -fx-font-weight: bold;
+}
+
+/* ScrollPane */
+.scroll-pane {
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: #ffffff;
+}
+
+/* Separator */
+.separator {
+    -fx-padding: 10px 0;
+}
+
+.separator:vertical .line {
+    -fx-border-color: #d0d0d0;
+    -fx-border-width: 1;
+}
+
+.separator:horizontal .line {
+    -fx-border-color: #d0d0d0;
+    -fx-border-width: 1;
+}
+
+/* VBox and HBox */
+VBox, HBox {
+    -fx-spacing: 0;
+}
+
+/* SplitPane */
+.split-pane {
+    -fx-border-color: #d0d0d0;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+    -fx-background-color: #ffffff;
+}
+
+.split-pane:vertical > .split-pane-divider {
+    -fx-padding: 0 2px 0 2px;
+    -fx-background-color: #d0d0d0;
+}
+
+.split-pane:horizontal > .split-pane-divider {
+    -fx-padding: 2px 0 2px 0;
+    -fx-background-color: #d0d0d0;
+}
+
+/* Custom Classes for Layout */
+.container {
+    -fx-spacing: 15px;
+    -fx-padding: 20px;
+    -fx-background-color: #ffffff;
+}
+
+.container-section {
+    -fx-spacing: 10px;
+    -fx-padding: 15px;
+    -fx-background-color: #fafafa;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+}
+
+.field-group {
+    -fx-spacing: 5px;
+    -fx-padding: 0;
+}
+
+.button-group {
+    -fx-spacing: 10px;
+    -fx-padding: 15px 0 0 0;
+}
+
+/* For multi-select combo with filter */
+.limited-height-combo {
+    -fx-max-height: 300px;
+}
+
+.filter-field {
+    -fx-border-color: #d0d0d0;
+    -fx-border-radius: 4;
+    -fx-padding: 8px;
+    -fx-font-size: 12px;
+}
+
+.filter-field:focused {
+    -fx-border-color: #0078d4;
+    -fx-border-width: 2;
+}
+
+/* Header Bar */
+.header-bar {
+    -fx-background-color: #2c3e50;
+    -fx-padding: 20px;
+    -fx-spacing: 10px;
+}
+
+.header-bar Label {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+/* Focus styles */
+.focused {
+    -fx-focus-color: #0078d4;
+}
+

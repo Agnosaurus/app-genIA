@@ -10,6 +10,7 @@ import eu.askadev.magic.model.Author;
 import javafx.collections.FXCollections;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -165,16 +166,26 @@ public class ManuscriptListView {
         ComboBox<Object> authorsCombo = (ComboBox<Object>) authorsComboWrapper.getChildren().get(1);
 
         ScrollPane scrollPane = new ScrollPane();
-        VBox content = new VBox(10,
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #ffffff;");
+
+        // Group fields into sections
+        VBox basicInfo = createFieldGroup("Basic Information",
                 new Label("Unique ID:"), uniqueIdField,
                 new Label("Titre:"), titreField,
-                new Label("Language:"), languageCombo,
-                new Label("Reference:"), refField,
+                new Label("Reference:"), refField);
+
+        VBox details = createFieldGroup("Details",
                 new Label("Lieu:"), lieuField,
                 new Label("Date:"), dateField,
-                new Label("Scriptorium:"), scriptoriumField,
+                new Label("Scriptorium:"), scriptoriumField);
+
+        VBox relations = createFieldGroup("Relations",
+                new Label("Language:"), languageCombo,
                 new Label("Authors:"), authorsComboWrapper);
-        content.setPadding(new Insets(10));
+
+        content.getChildren().addAll(basicInfo, details, relations);
         scrollPane.setContent(content);
         detailView.getChildren().add(scrollPane);
 
@@ -198,6 +209,21 @@ public class ManuscriptListView {
         }
 
         detailView.getChildren().addAll(new Separator(), buttonBox);
+    }
+
+    private VBox createFieldGroup(String title, Node... fieldPairs) {
+        VBox group = new VBox(10);
+        group.setStyle("-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 4; -fx-padding: 15; -fx-background-color: #fafafa;");
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 10 0;");
+        group.getChildren().add(titleLabel);
+
+        for (Node field : fieldPairs) {
+            group.getChildren().add(field);
+        }
+
+        return group;
     }
 
     private ComboBox<Object> createMultiSelectCombo(String label, java.util.List<?> allItems, java.util.Set<?> selectedItems, boolean editable) {
