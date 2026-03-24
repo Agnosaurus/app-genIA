@@ -58,8 +58,8 @@ public class NameListView {
         VBox listBox = new VBox(10);
         listBox.setPadding(new Insets(10));
 
-        Label title = new Label("Names");
-        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        Label title = new Label("📝 Names");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #0078d4;");
 
         listView = new ListView<>();
         listView.setCellFactory(lv -> new ListCell<Name>() {

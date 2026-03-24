@@ -55,8 +55,8 @@ public class PublicationListView {
         VBox listBox = new VBox(10);
         listBox.setPadding(new Insets(10));
 
-        Label title = new Label("Publications");
-        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        Label title = new Label("📚 Publications");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #0078d4;");
 
         tableView = new TableView<>();
         TableColumn<Publication, String> keyCol = new TableColumn<>("Key");
