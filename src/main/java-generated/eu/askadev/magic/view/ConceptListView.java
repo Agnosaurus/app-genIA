@@ -141,21 +141,46 @@ public class ConceptListView {
         TextField valueField = new TextField(selectedConcept == null ? "" : selectedConcept.getValue());
         valueField.setEditable(isEditMode);
 
+        // Debug: show what keywords are currently linked to this concept
+        if (selectedConcept != null) {
+            System.out.println("DEBUG: Loading concept: " + selectedConcept.getValue());
+            System.out.println("DEBUG: Current keywords count: " + (selectedConcept.getKeywords() != null ? selectedConcept.getKeywords().size() : 0));
+            if (selectedConcept.getKeywords() != null && !selectedConcept.getKeywords().isEmpty()) {
+                selectedConcept.getKeywords().forEach(k -> System.out.println("DEBUG: Linked keyword: " + k.toString()));
+            }
+        }
+
+        // Create multi-select combo for keywords
         VBox keywordsComboWrapper = createMultiSelectComboWithFilter("Keywords", keywordController.findAll(),
             selectedConcept == null ? null : selectedConcept.getKeywords(), isEditMode);
         // Extract the combo from wrapper (it's the second child: filter field is first, combo is second)
         ComboBox<Object> keywordsCombo = (ComboBox<Object>) keywordsComboWrapper.getChildren().get(1);
+
+        // Get the selections set - it's stored in the wrapper's userData
+        @SuppressWarnings("unchecked")
+        java.util.Set<Object> initialSelections = (java.util.Set<Object>) keywordsComboWrapper.getUserData();
+        System.out.println("DEBUG: refreshDetailView - wrapper has " + (initialSelections != null ? initialSelections.size() : 0) + " selections");
 
         ScrollPane scrollPane = new ScrollPane();
         VBox content = new VBox(15);
         content.setPadding(new Insets(20));
         content.setStyle("-fx-background-color: #ffffff;");
 
-        VBox basicInfo = createFieldGroup("Concept Information",
-                new Label("Value:"), valueField,
-                new Label("Keywords:"), keywordsComboWrapper);
+        // Value field group
+        VBox valueGroup = new VBox(5);
+        valueGroup.setStyle("-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 4; -fx-padding: 15; -fx-background-color: #fafafa;");
+        Label valueTitle = new Label("Concept Information");
+        valueTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 10 0;");
+        valueGroup.getChildren().addAll(valueTitle, new Label("Value:"), valueField);
 
-        content.getChildren().add(basicInfo);
+        // Keywords group
+        VBox keywordsGroup = new VBox(5);
+        keywordsGroup.setStyle("-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 4; -fx-padding: 15; -fx-background-color: #fafafa;");
+        Label keywordsTitle = new Label("Keywords");
+        keywordsTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 10 0;");
+        keywordsGroup.getChildren().addAll(keywordsTitle, keywordsComboWrapper);
+
+        content.getChildren().addAll(valueGroup, keywordsGroup);
         scrollPane.setContent(content);
         detailView.getChildren().add(scrollPane);
 
@@ -187,7 +212,12 @@ public class ConceptListView {
         comboBox.setPrefHeight(25);
         comboBox.setPrefWidth(300);
 
-        java.util.Set<Object> selections = new java.util.HashSet<>(selectedItems != null ? selectedItems : java.util.Collections.emptySet());
+        // Initialize selections with provided items - IMPORTANT: must be a mutable set
+        java.util.Set<Object> selections = new java.util.HashSet<>();
+        if (selectedItems != null && !selectedItems.isEmpty()) {
+            selections.addAll(selectedItems);
+        }
+
         FilteredList<Object> filteredList = new FilteredList<>(FXCollections.observableArrayList(allItems));
         comboBox.setItems(filteredList);
 
@@ -198,7 +228,9 @@ public class ConceptListView {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText((selections.contains(item) ? "✓ " : "") + item.toString());
+                    // Display with checkmark if selected, use toString() for display
+                    boolean isSelected = selections.contains(item);
+                    setText((isSelected ? "✓ " : "") + item.toString());
                 }
 
                 setOnMouseClicked(event -> {
@@ -209,7 +241,9 @@ public class ConceptListView {
                             selections.add(item);
                         }
                         comboBox.hide();
-                        updateItem(item, false);
+                        // Refresh the list display
+                        comboBox.getItems().clear();
+                        comboBox.getItems().addAll(filteredList.getSource());
                         event.consume();
                     }
                 });
@@ -231,6 +265,7 @@ public class ConceptListView {
             }
         });
 
+        // Store selections in userData for later retrieval
         comboBox.setUserData(selections);
         return comboBox;
     }
@@ -258,6 +293,13 @@ public class ConceptListView {
 
         VBox wrapper = new VBox(5, filterField, comboBox);
         wrapper.setPrefWidth(300);
+
+        // IMPORTANT: Store the selections set in the wrapper so we can retrieve it later
+        java.util.Set<Object> selections = (java.util.Set<Object>) comboBox.getUserData();
+        wrapper.setUserData(selections);
+
+        System.out.println("DEBUG: Created wrapper with " + selections.size() + " initially selected items");
+
         return wrapper;
     }
 
@@ -268,15 +310,25 @@ public class ConceptListView {
         @SuppressWarnings("unchecked")
         java.util.Set<Object> selectedKeywords = (java.util.Set<Object>) keywordsCombo.getUserData();
 
+        System.out.println("DEBUG: Saving concept with " + (selectedKeywords != null ? selectedKeywords.size() : 0) + " keywords");
+
+        if (selectedKeywords != null && !selectedKeywords.isEmpty()) {
+            selectedKeywords.forEach(k -> System.out.println("DEBUG: Selected keyword: " + k.toString()));
+        }
+
         // Initialize keywords set if null
         if (result.getKeywords() == null) {
             result.setKeywords(new java.util.HashSet<>());
         }
 
         result.getKeywords().clear();
-        result.getKeywords().addAll(selectedKeywords.stream()
-            .map(item -> (Keyword) item)
-            .collect(Collectors.toSet()));
+        if (selectedKeywords != null && !selectedKeywords.isEmpty()) {
+            result.getKeywords().addAll(selectedKeywords.stream()
+                .map(item -> (Keyword) item)
+                .collect(Collectors.toSet()));
+        }
+
+        System.out.println("DEBUG: Concept now has " + result.getKeywords().size() + " keywords");
 
         if (selectedConcept == null) {
             controller.create(result);

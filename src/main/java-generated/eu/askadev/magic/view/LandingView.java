@@ -1,17 +1,23 @@
 package eu.askadev.magic.view;
 
 import eu.askadev.magic.service.LocalizationService;
+import eu.askadev.magic.service.PublicationImportService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.Parent;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
+
+import java.io.File;
 
 @Component
 public class LandingView {
@@ -24,12 +30,14 @@ public class LandingView {
     private final NameListView nameListView;
     private final PublicationListView publicationListView;
     private final VariantListView variantListView;
+    private final PublicationImportService publicationImportService;
     private Stage stage;
 
     public LandingView(AuthorListView authorListView, ConceptListView conceptListView,
                        KeywordListView keywordListView, LanguageListView languageListView,
                        ManuscriptListView manuscriptListView, NameListView nameListView,
-                       PublicationListView publicationListView, VariantListView variantListView) {
+                       PublicationListView publicationListView, VariantListView variantListView,
+                       PublicationImportService publicationImportService) {
         this.authorListView = authorListView;
         this.conceptListView = conceptListView;
         this.keywordListView = keywordListView;
@@ -38,6 +46,7 @@ public class LandingView {
         this.nameListView = nameListView;
         this.publicationListView = publicationListView;
         this.variantListView = variantListView;
+        this.publicationImportService = publicationImportService;
     }
 
     public void setStage(Stage stage) {
@@ -101,34 +110,35 @@ public class LandingView {
         Label magicTitle = new Label("M.A.G.I.C");
         magicTitle.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #ffffff; -fx-letter-spacing: 2;");
 
-        Label magicAcronym = new Label(i18n.get("app.subtitle"));
+        Label magicAcronym = new Label("Morgana's Archive for Gathering, Indexing, and Cataloging");
         magicAcronym.setStyle("-fx-font-size: 10px; -fx-text-fill: #b3d9ff; -fx-font-style: italic;");
 
-        Label magicSubtitle = new Label(i18n.get("app.description"));
+        Label magicSubtitle = new Label("Data Management System");
         magicSubtitle.setStyle("-fx-font-size: 12px; -fx-text-fill: #87ceeb; -fx-padding: 3 0 0 0;");
 
         headerContent.getChildren().addAll(magicTitle, magicAcronym, magicSubtitle);
 
         magicHeader.getChildren().addAll(headerTop, headerContent);
 
-        // ...existing code...
-        VBox contentArea = new VBox(20);
-        contentArea.setPadding(new Insets(30));
-        contentArea.setStyle("-fx-background-color: #f5f5f5;");
+        // Main content area split into left (entity links) and right (import button)
+        HBox splitContent = new HBox(30);
+        splitContent.setPadding(new Insets(30));
+        splitContent.setStyle("-fx-background-color: #f5f5f5;");
+        splitContent.setPrefHeight(400); // Ensures enough height for both panels
 
+        // Left: entity links (button grid)
+        VBox leftZone = new VBox(10);
+        leftZone.setPadding(new Insets(0));
+        leftZone.setStyle("-fx-background-color: #ffffff; -fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 4;");
         Label welcome = new Label(i18n.get("landing.dashboard"));
         welcome.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1a1a1a;");
-
         Label subtitle = new Label(i18n.get("landing.select"));
         subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #666666; -fx-padding: 0 0 10 0;");
-
-        // Button grid (3x3 matrix)
         GridPane buttonGrid = new GridPane();
         buttonGrid.setHgap(15);
         buttonGrid.setVgap(15);
         buttonGrid.setPadding(new Insets(20));
         buttonGrid.setStyle("-fx-background-color: #ffffff; -fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 4;");
-
         Button authorBtn = createStyledButton("👤\n" + i18n.get("entity.authors"));
         Button conceptBtn = createStyledButton("💡\n" + i18n.get("entity.concepts"));
         Button keywordBtn = createStyledButton("🏷️\n" + i18n.get("entity.keywords"));
@@ -137,7 +147,6 @@ public class LandingView {
         Button nameBtn = createStyledButton("📝\n" + i18n.get("entity.names"));
         Button publicationBtn = createStyledButton("📚\n" + i18n.get("entity.publications"));
         Button variantBtn = createStyledButton("🔀\n" + i18n.get("entity.variants"));
-
         authorBtn.setOnAction(e -> navigateToListView(authorListView));
         conceptBtn.setOnAction(e -> navigateToListView(conceptListView));
         keywordBtn.setOnAction(e -> navigateToListView(keywordListView));
@@ -146,8 +155,6 @@ public class LandingView {
         nameBtn.setOnAction(e -> navigateToListView(nameListView));
         publicationBtn.setOnAction(e -> navigateToListView(publicationListView));
         variantBtn.setOnAction(e -> navigateToListView(variantListView));
-
-        // Add buttons to grid in 3x3 layout
         buttonGrid.add(authorBtn, 0, 0);
         buttonGrid.add(conceptBtn, 1, 0);
         buttonGrid.add(keywordBtn, 2, 0);
@@ -156,10 +163,50 @@ public class LandingView {
         buttonGrid.add(nameBtn, 2, 1);
         buttonGrid.add(publicationBtn, 0, 2);
         buttonGrid.add(variantBtn, 1, 2);
+        leftZone.getChildren().addAll(welcome, subtitle, buttonGrid);
+        VBox.setVgrow(buttonGrid, Priority.ALWAYS);
+        VBox.setVgrow(leftZone, Priority.ALWAYS);
 
-        contentArea.getChildren().addAll(welcome, subtitle, buttonGrid);
+        // Right: Import references button (styled like left zone)
+        VBox rightZone = new VBox(10);
+        rightZone.setAlignment(Pos.TOP_CENTER);
+        rightZone.setPadding(new Insets(0));
+        rightZone.setStyle("-fx-background-color: #ffffff; -fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 4;");
+        Label importTitle = new Label(i18n.get("import.references.title"));
+        importTitle.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #0078d4; -fx-padding: 20 0 10 0;");
+        Button importBtn = new Button(i18n.get("button.import.references"));
+        importBtn.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-background-color: #0078d4; -fx-text-fill: #fff; -fx-padding: 18px 32px; -fx-border-radius: 6; -fx-cursor: hand;");
+        importBtn.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle(i18n.get("import.references.dialog.title"));
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+            File file = fileChooser.showOpenDialog(stage);
+            if (file != null) {
+                try {
+                    publicationImportService.importCsv(file);
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, i18n.get("import.references.success"), ButtonType.OK);
+                    alert.showAndWait();
+                } catch (Exception ex) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, i18n.get("import.references.error") + "\n" + ex.getMessage(), ButtonType.OK);
+                    alert.showAndWait();
+                }
+            }
+        });
+        rightZone.getChildren().addAll(importTitle, importBtn);
+        rightZone.setMinWidth(350);
+        rightZone.setMaxWidth(350);
+        rightZone.setPrefWidth(350);
+        VBox.setVgrow(rightZone, Priority.ALWAYS);
 
-        root.getChildren().addAll(magicHeader, contentArea);
+        splitContent.getChildren().clear();
+        splitContent.getChildren().addAll(leftZone, rightZone);
+        HBox.setHgrow(leftZone, Priority.ALWAYS);
+        HBox.setHgrow(rightZone, Priority.ALWAYS);
+        splitContent.setFillHeight(true);
+
+        // Replace previous contentArea with splitContent
+        root.getChildren().clear();
+        root.getChildren().addAll(magicHeader, splitContent);
         return root;
     }
 
