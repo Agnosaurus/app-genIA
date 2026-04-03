@@ -2,6 +2,7 @@ package eu.askadev.magic;
 
 import eu.askadev.magic.service.PersistenceService;
 import eu.askadev.magic.service.LocalizationService;
+import eu.askadev.magic.service.ThemeService;
 import eu.askadev.magic.util.SingleInstanceManager;
 import eu.askadev.magic.view.LandingView;
 import javafx.application.Application;
@@ -96,6 +97,10 @@ public class JavaFxApplication extends Application {
 
             System.out.println("INFO: Creating scene...");
             Scene scene = new Scene(landingView.getView(), 1200, 800);
+
+            // Register scene with ThemeService
+            ThemeService themeService = springContext.getBean(ThemeService.class);
+            themeService.setScene(scene);
 
             // Load CSS stylesheet
             System.out.println("INFO: Loading CSS stylesheet...");

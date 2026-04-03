@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class PersistenceService {
@@ -67,50 +68,68 @@ public class PersistenceService {
 
         try {
             Map<String, Object> data = objectMapper.readValue(file, Map.class);
-            
-            authorRepository.deleteAll();
+
+            // Delete all in reverse dependency order
+            variantRepository.deleteAll();
+            manuscriptRepository.deleteAll();
             conceptRepository.deleteAll();
+            authorRepository.deleteAll();
             keywordRepository.deleteAll();
             languageRepository.deleteAll();
-            manuscriptRepository.deleteAll();
             nameRepository.deleteAll();
             publicationRepository.deleteAll();
-            variantRepository.deleteAll();
 
-            if (data.containsKey("authors")) {
-                List<Map<String, Object>> authors = (List<Map<String, Object>>) data.get("authors");
-                authors.forEach(a -> authorRepository.save(objectMapper.convertValue(a, Author.class)));
-            }
-            if (data.containsKey("concepts")) {
-                List<Map<String, Object>> concepts = (List<Map<String, Object>>) data.get("concepts");
-                concepts.forEach(c -> conceptRepository.save(objectMapper.convertValue(c, Concept.class)));
-            }
-            if (data.containsKey("keywords")) {
-                List<Map<String, Object>> keywords = (List<Map<String, Object>>) data.get("keywords");
-                keywords.forEach(k -> keywordRepository.save(objectMapper.convertValue(k, Keyword.class)));
-            }
-            if (data.containsKey("languages")) {
-                List<Map<String, Object>> languages = (List<Map<String, Object>>) data.get("languages");
-                languages.forEach(l -> languageRepository.save(objectMapper.convertValue(l, Language.class)));
-            }
-            if (data.containsKey("manuscripts")) {
-                List<Map<String, Object>> manuscripts = (List<Map<String, Object>>) data.get("manuscripts");
-                manuscripts.forEach(m -> manuscriptRepository.save(objectMapper.convertValue(m, Manuscript.class)));
-            }
-            if (data.containsKey("names")) {
-                List<Map<String, Object>> names = (List<Map<String, Object>>) data.get("names");
-                names.forEach(n -> nameRepository.save(objectMapper.convertValue(n, Name.class)));
-            }
-            if (data.containsKey("publications")) {
-                List<Map<String, Object>> publications = (List<Map<String, Object>>) data.get("publications");
-                publications.forEach(p -> publicationRepository.save(objectMapper.convertValue(p, Publication.class)));
-            }
-            if (data.containsKey("variants")) {
-                List<Map<String, Object>> variants = (List<Map<String, Object>>) data.get("variants");
-                variants.forEach(v -> variantRepository.save(objectMapper.convertValue(v, Variant.class)));
-            }
+            // Load leaf entities first (no @DBRef dependencies)
+            loadList(data, "authors", Author.class).forEach(authorRepository::save);
+            loadList(data, "keywords", Keyword.class).forEach(keywordRepository::save);
+            loadList(data, "languages", Language.class).forEach(languageRepository::save);
+            loadList(data, "names", Name.class).forEach(nameRepository::save);
+            loadList(data, "publications", Publication.class).forEach(publicationRepository::save);
+
+            // Load entities with @DBRef: resolve references by ID from already-saved entities
+            loadList(data, "concepts", Concept.class).forEach(concept -> {
+                if (concept.getKeywords() != null) {
+                    Set<Keyword> resolved = concept.getKeywords().stream()
+                        .map(k -> keywordRepository.findById(k.getId()).orElse(null))
+                        .filter(k -> k != null)
+                        .collect(java.util.stream.Collectors.toSet());
+                    concept.setKeywords(resolved);
+                }
+                conceptRepository.save(concept);
+            });
+
+            loadList(data, "manuscripts", Manuscript.class).forEach(manuscript -> {
+                if (manuscript.getLanguage() != null) {
+                    manuscript.setLanguage(languageRepository.findById(manuscript.getLanguage().getId()).orElse(null));
+                }
+                if (manuscript.getAuthors() != null) {
+                    Set<Author> resolved = manuscript.getAuthors().stream()
+                        .map(a -> authorRepository.findById(a.getId()).orElse(null))
+                        .filter(a -> a != null)
+                        .collect(java.util.stream.Collectors.toSet());
+                    manuscript.setAuthors(resolved);
+                }
+                manuscriptRepository.save(manuscript);
+            });
+
+            loadList(data, "variants", Variant.class).forEach(variant -> {
+                if (variant.getName() != null) {
+                    variant.setName(nameRepository.findById(variant.getName().getId()).orElse(null));
+                }
+                variantRepository.save(variant);
+            });
+
         } catch (IOException e) {
             throw new RuntimeException("Failed to load database from file", e);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> List<T> loadList(Map<String, Object> data, String key, Class<T> type) {
+        if (!data.containsKey(key)) return java.util.Collections.emptyList();
+        List<Map<String, Object>> items = (List<Map<String, Object>>) data.get(key);
+        return items.stream()
+            .map(item -> objectMapper.convertValue(item, type))
+            .collect(java.util.stream.Collectors.toList());
     }
 }

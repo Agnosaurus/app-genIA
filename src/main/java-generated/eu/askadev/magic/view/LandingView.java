@@ -2,6 +2,7 @@ package eu.askadev.magic.view;
 
 import eu.askadev.magic.service.LocalizationService;
 import eu.askadev.magic.service.PublicationImportService;
+import eu.askadev.magic.service.ThemeService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
@@ -31,13 +32,14 @@ public class LandingView {
     private final PublicationListView publicationListView;
     private final VariantListView variantListView;
     private final PublicationImportService publicationImportService;
+    private final ThemeService themeService;
     private Stage stage;
 
     public LandingView(AuthorListView authorListView, ConceptListView conceptListView,
                        KeywordListView keywordListView, LanguageListView languageListView,
                        ManuscriptListView manuscriptListView, NameListView nameListView,
                        PublicationListView publicationListView, VariantListView variantListView,
-                       PublicationImportService publicationImportService) {
+                       PublicationImportService publicationImportService, ThemeService themeService) {
         this.authorListView = authorListView;
         this.conceptListView = conceptListView;
         this.keywordListView = keywordListView;
@@ -47,6 +49,7 @@ public class LandingView {
         this.publicationListView = publicationListView;
         this.variantListView = variantListView;
         this.publicationImportService = publicationImportService;
+        this.themeService = themeService;
     }
 
     public void setStage(Stage stage) {
@@ -101,7 +104,21 @@ public class LandingView {
             stage.getScene().setRoot(getView());
         });
 
-        headerTop.getChildren().addAll(enBtn, frBtn);
+        Button darkModeBtn = new Button(themeService.isDarkMode() ? "☀️ Light" : "🌙 Dark");
+        darkModeBtn.setStyle(
+            "-fx-font-size: 11px; " +
+            "-fx-padding: 6px 12px; " +
+            "-fx-background-color: #0078d4; " +
+            "-fx-text-fill: #ffffff; " +
+            "-fx-border-radius: 3; " +
+            "-fx-cursor: hand;"
+        );
+        darkModeBtn.setOnAction(e -> {
+            themeService.toggle();
+            stage.getScene().setRoot(getView());
+        });
+
+        headerTop.getChildren().addAll(darkModeBtn, enBtn, frBtn);
 
         // Main header content
         VBox headerContent = new VBox(5);

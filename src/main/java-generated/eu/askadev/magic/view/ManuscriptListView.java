@@ -3,14 +3,11 @@ package eu.askadev.magic.view;
 import eu.askadev.magic.controller.ManuscriptController;
 import eu.askadev.magic.controller.LanguageController;
 import eu.askadev.magic.controller.AuthorController;
-import eu.askadev.magic.model.Keyword;
 import eu.askadev.magic.model.Manuscript;
 import eu.askadev.magic.model.Language;
 import eu.askadev.magic.model.Author;
 import javafx.collections.FXCollections;
-import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -18,6 +15,11 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class ManuscriptListView {
@@ -41,7 +43,7 @@ public class ManuscriptListView {
         splitPane.setPrefWidth(800);
         splitPane.setPrefHeight(600);
 
-        VBox listBox = createListView();
+        VBox listBox = createListBox();
         detailView = new VBox(10);
         detailView.setPadding(new Insets(20));
         refreshDetailView();
@@ -61,32 +63,32 @@ public class ManuscriptListView {
         return root;
     }
 
-    private VBox createListView() {
+    private VBox createListBox() {
         VBox listBox = new VBox(10);
         listBox.setPadding(new Insets(10));
 
-        Label title = new Label("📄 Manuscripts");
-        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #0078d4;");
+        Label title = new Label("Manuscripts");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
         tableView = new TableView<>();
         TableColumn<Manuscript, String> uniqueIdCol = new TableColumn<>("Unique ID");
         uniqueIdCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getUniqueId()));
         TableColumn<Manuscript, String> titreCol = new TableColumn<>("Titre");
         titreCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getTitre()));
-        TableColumn<Manuscript, String> langCol = new TableColumn<>("Language");
-        langCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-            data.getValue().getLanguage() != null ? data.getValue().getLanguage().getName() : ""));
-        TableColumn<Manuscript, String> refCol = new TableColumn<>("Reference");
-        refCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
-            data.getValue().getReferenceManuscript() != null ? data.getValue().getReferenceManuscript() : ""));
-
-        tableView.getColumns().addAll(uniqueIdCol, titreCol, langCol, refCol);
+        tableView.getColumns().addAll(uniqueIdCol, titreCol);
         refreshList();
 
         tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             selectedManuscript = newVal;
             isEditMode = false;
             refreshDetailView();
+        });
+
+        tableView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2 && selectedManuscript != null) {
+                isEditMode = true;
+                refreshDetailView();
+            }
         });
 
         Button addBtn = new Button("Add New");
@@ -100,14 +102,13 @@ public class ManuscriptListView {
         deleteBtn.setOnAction(e -> {
             if (selectedManuscript != null) {
                 controller.delete(selectedManuscript.getId());
-                refreshList();
                 selectedManuscript = null;
+                refreshList();
                 refreshDetailView();
             }
         });
 
-        HBox buttons = new HBox(10, addBtn, deleteBtn);
-        listBox.getChildren().addAll(title, tableView, buttons);
+        listBox.getChildren().addAll(title, tableView, new HBox(10, addBtn, deleteBtn));
         VBox.setVgrow(tableView, Priority.ALWAYS);
         return listBox;
     }
@@ -126,10 +127,10 @@ public class ManuscriptListView {
 
         TextField uniqueIdField = new TextField(selectedManuscript == null ? "" : selectedManuscript.getUniqueId());
         TextField titreField = new TextField(selectedManuscript == null ? "" : selectedManuscript.getTitre());
-        TextField refField = new TextField(selectedManuscript == null ? "" : (selectedManuscript.getReferenceManuscript() != null ? selectedManuscript.getReferenceManuscript() : ""));
-        TextField lieuField = new TextField(selectedManuscript == null ? "" : selectedManuscript.getLieu());
-        TextField dateField = new TextField(selectedManuscript == null ? "" : selectedManuscript.getDate());
-        TextField scriptoriumField = new TextField(selectedManuscript == null ? "" : selectedManuscript.getScriptorium());
+        TextField refField = new TextField(selectedManuscript == null ? "" : nvl(selectedManuscript.getReferenceManuscript()));
+        TextField lieuField = new TextField(selectedManuscript == null ? "" : nvl(selectedManuscript.getLieu()));
+        TextField dateField = new TextField(selectedManuscript == null ? "" : nvl(selectedManuscript.getDate()));
+        TextField scriptoriumField = new TextField(selectedManuscript == null ? "" : nvl(selectedManuscript.getScriptorium()));
 
         uniqueIdField.setEditable(isEditMode);
         titreField.setEditable(isEditMode);
@@ -138,180 +139,82 @@ public class ManuscriptListView {
         dateField.setEditable(isEditMode);
         scriptoriumField.setEditable(isEditMode);
 
-        ComboBox<Language> languageCombo = new ComboBox<>();
-        languageCombo.setItems(FXCollections.observableArrayList(languageController.findAll()));
-        languageCombo.setCellFactory(lv -> new ListCell<Language>() {
-            @Override
-            protected void updateItem(Language item, boolean empty) {
+        List<Language> allLanguages = languageController.findAll();
+        ComboBox<Language> languageCombo = new ComboBox<>(FXCollections.observableArrayList(allLanguages));
+        languageCombo.setCellFactory(lv -> new ListCell<>() {
+            @Override protected void updateItem(Language item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? "" : item.toString());
             }
         });
-        languageCombo.setButtonCell(new ListCell<Language>() {
-            @Override
-            protected void updateItem(Language item, boolean empty) {
+        languageCombo.setButtonCell(new ListCell<>() {
+            @Override protected void updateItem(Language item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? "" : item.toString());
             }
         });
         languageCombo.setDisable(!isEditMode);
         if (selectedManuscript != null && selectedManuscript.getLanguage() != null) {
-            languageCombo.setValue(selectedManuscript.getLanguage());
+            String langId = selectedManuscript.getLanguage().getId();
+            allLanguages.stream().filter(l -> l.getId().equals(langId)).findFirst()
+                .ifPresent(languageCombo::setValue);
         }
 
-        // Authors multi-select ComboBox with filter
-        VBox authorsComboWrapper = createMultiSelectComboWithFilter("Authors", authorController.findAll(),
-            selectedManuscript == null ? null : selectedManuscript.getAuthors(), isEditMode);
-        // Extract the combo from wrapper (it's the second child: filter field is first, combo is second)
-        ComboBox<Object> authorsCombo = (ComboBox<Object>) authorsComboWrapper.getChildren().get(1);
+        List<Author> allAuthors = authorController.findAll();
+        Set<String> selectedAuthorIds = new HashSet<>(selectedManuscript == null || selectedManuscript.getAuthors() == null ? Set.of() :
+            selectedManuscript.getAuthors().stream().map(Author::getId).collect(Collectors.toSet()));
 
-        ScrollPane scrollPane = new ScrollPane();
-        VBox content = new VBox(15);
-        content.setPadding(new Insets(20));
-        content.setStyle("-fx-background-color: #ffffff;");
+        ListView<Author> authorsListView = new ListView<>(FXCollections.observableArrayList(allAuthors));
+        authorsListView.setCellFactory(lv -> new ListCell<>() {
+            private final CheckBox checkBox = new CheckBox();
+            {
+                setGraphic(checkBox);
+                checkBox.setDisable(!isEditMode);
+                checkBox.setOnAction(e -> {
+                    if (getItem() != null) {
+                        if (checkBox.isSelected()) selectedAuthorIds.add(getItem().getId());
+                        else selectedAuthorIds.remove(getItem().getId());
+                    }
+                });
+            }
+            @Override protected void updateItem(Author item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText(null); checkBox.setVisible(false); }
+                else { setText(item.getFirstName() + " " + item.getLastName()); checkBox.setVisible(true); checkBox.setSelected(selectedAuthorIds.contains(item.getId())); }
+            }
+        });
+        authorsListView.setPrefHeight(120);
 
-        // Group fields into sections
-        VBox basicInfo = createFieldGroup("Basic Information",
-                new Label("Unique ID:"), uniqueIdField,
-                new Label("Titre:"), titreField,
-                new Label("Reference:"), refField);
-
-        VBox details = createFieldGroup("Details",
-                new Label("Lieu:"), lieuField,
-                new Label("Date:"), dateField,
-                new Label("Scriptorium:"), scriptoriumField);
-
-        VBox relations = createFieldGroup("Relations",
-                new Label("Language:"), languageCombo,
-                new Label("Authors:"), authorsComboWrapper);
-
-        content.getChildren().addAll(basicInfo, details, relations);
-        scrollPane.setContent(content);
-        detailView.getChildren().add(scrollPane);
+        VBox content = new VBox(10,
+            new Label("Unique ID:"), uniqueIdField,
+            new Label("Titre:"), titreField,
+            new Label("Reference:"), refField,
+            new Label("Lieu:"), lieuField,
+            new Label("Date:"), dateField,
+            new Label("Scriptorium:"), scriptoriumField,
+            new Label("Language:"), languageCombo,
+            new Label("Authors:"), authorsListView);
+        content.setPadding(new Insets(15));
+        detailView.getChildren().add(new ScrollPane(content));
 
         HBox buttonBox = new HBox(10);
         if (isEditMode) {
             Button saveBtn = new Button("Save");
-            saveBtn.setOnAction(e -> saveManuscript(uniqueIdField, titreField, refField, lieuField, dateField, scriptoriumField, languageCombo, authorsCombo));
+            saveBtn.setOnAction(e -> saveManuscript(uniqueIdField, titreField, refField, lieuField, dateField, scriptoriumField, languageCombo, allAuthors, selectedAuthorIds));
             Button cancelBtn = new Button("Cancel");
-            cancelBtn.setOnAction(e -> {
-                isEditMode = false;
-                refreshDetailView();
-            });
+            cancelBtn.setOnAction(e -> { isEditMode = false; refreshDetailView(); });
             buttonBox.getChildren().addAll(saveBtn, cancelBtn);
         } else {
             Button editBtn = new Button("Edit");
-            editBtn.setOnAction(e -> {
-                isEditMode = true;
-                refreshDetailView();
-            });
+            editBtn.setOnAction(e -> { isEditMode = true; refreshDetailView(); });
             buttonBox.getChildren().add(editBtn);
         }
-
         detailView.getChildren().addAll(new Separator(), buttonBox);
     }
 
-    private VBox createFieldGroup(String title, Node... fieldPairs) {
-        VBox group = new VBox(10);
-        group.setStyle("-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 4; -fx-padding: 15; -fx-background-color: #fafafa;");
-
-        Label titleLabel = new Label(title);
-        titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 10 0;");
-        group.getChildren().add(titleLabel);
-
-        for (Node field : fieldPairs) {
-            group.getChildren().add(field);
-        }
-
-        return group;
-    }
-
-    private ComboBox<Object> createMultiSelectCombo(String label, java.util.List<?> allItems, java.util.Set<?> selectedItems, boolean editable) {
-        ComboBox<Object> comboBox = new ComboBox<>();
-        comboBox.setDisable(!editable);
-        comboBox.setPrefHeight(25);
-        comboBox.setPrefWidth(300);
-
-        java.util.Set<Object> selections = new java.util.HashSet<>(selectedItems != null ? selectedItems : java.util.Collections.emptySet());
-        FilteredList<Object> filteredList = new FilteredList<>(FXCollections.observableArrayList(allItems));
-        comboBox.setItems(filteredList);
-
-        comboBox.setCellFactory(lv -> {
-            VBox cellBox = new VBox();
-            ListCell<Object> cell = new ListCell<Object>() {
-                @Override
-                protected void updateItem(Object item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setText(null);
-                    } else {
-                        setText((selections.contains(item) ? "✓ " : "") + item.toString());
-                    }
-
-                    setOnMouseClicked(event -> {
-                        if (!empty && item != null) {
-                            if (selections.contains(item)) {
-                                selections.remove(item);
-                            } else {
-                                selections.add(item);
-                            }
-                            comboBox.hide();
-                            updateItem(item, false);
-                            event.consume();
-                        }
-                    });
-                }
-            };
-            cell.setPrefHeight(25);
-            return cell;
-        });
-
-        comboBox.setButtonCell(new ListCell<Object>() {
-            @Override
-            protected void updateItem(Object item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(label + " (" + selections.size() + ")");
-            }
-        });
-
-        comboBox.setOnShowing(e -> {
-            if (comboBox.isShowing()) {
-                // Set max height for dropdown to limit space
-                comboBox.getStyleClass().add("limited-height-combo");
-            }
-        });
-
-        comboBox.setUserData(selections);
-        return comboBox;
-    }
-
-    private VBox createMultiSelectComboWithFilter(String label, java.util.List<?> allItems, java.util.Set<?> selectedItems, boolean editable) {
-        ComboBox<Object> comboBox = createMultiSelectCombo(label, allItems, selectedItems, editable);
-
-        TextField filterField = new TextField();
-        filterField.setPromptText("Filter " + label + "...");
-        filterField.setEditable(editable);
-        filterField.setPrefWidth(300);
-
-        // Get the filtered list from the combo
-        FilteredList<Object> filteredList = (FilteredList<Object>) comboBox.getItems();
-
-        // Update filter predicate when text changes
-        filterField.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal == null || newVal.isEmpty()) {
-                filteredList.setPredicate(item -> true);
-            } else {
-                String filterText = newVal.toLowerCase();
-                filteredList.setPredicate(item -> item != null && item.toString().toLowerCase().contains(filterText));
-            }
-        });
-
-        VBox wrapper = new VBox(5, filterField, comboBox);
-        wrapper.setPrefWidth(300);
-        return wrapper;
-    }
-
-    private void saveManuscript(TextField uniqueIdField, TextField titreField, TextField refField, TextField lieuField, TextField dateField, TextField scriptoriumField, ComboBox<Language> languageCombo, ComboBox<Object> authorsCombo) {
+    private void saveManuscript(TextField uniqueIdField, TextField titreField, TextField refField,
+                                TextField lieuField, TextField dateField, TextField scriptoriumField,
+                                ComboBox<Language> languageCombo, List<Author> allAuthors, Set<String> selectedAuthorIds) {
         Manuscript result = selectedManuscript == null ? new Manuscript() : selectedManuscript;
         result.setUniqueId(uniqueIdField.getText());
         result.setTitre(titreField.getText());
@@ -320,19 +223,9 @@ public class ManuscriptListView {
         result.setDate(dateField.getText());
         result.setScriptorium(scriptoriumField.getText());
         result.setLanguage(languageCombo.getValue());
-
-        @SuppressWarnings("unchecked")
-        java.util.Set<Object> selectedAuthors = (java.util.Set<Object>) authorsCombo.getUserData();
-
-        // Initialize authors set if null
-        if (result.getAuthors() == null) {
-            result.setAuthors(new java.util.HashSet<>());
-        }
-
-        result.getAuthors().clear();
-        result.getAuthors().addAll(selectedAuthors.stream()
-            .map(item -> (Author) item)
-            .collect(java.util.stream.Collectors.toSet()));
+        result.setAuthors(allAuthors.stream()
+            .filter(a -> selectedAuthorIds.contains(a.getId()))
+            .collect(Collectors.toSet()));
 
         if (selectedManuscript == null) {
             controller.create(result);
@@ -342,5 +235,9 @@ public class ManuscriptListView {
         refreshList();
         isEditMode = false;
         refreshDetailView();
+    }
+
+    private String nvl(String s) {
+        return s == null ? "" : s;
     }
 }
