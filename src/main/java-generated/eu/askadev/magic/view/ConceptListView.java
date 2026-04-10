@@ -14,7 +14,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -126,41 +125,21 @@ public class ConceptListView {
         valueField.setEditable(isEditMode);
 
         List<Keyword> allKeywords = keywordController.findAll();
-        Set<String> selectedIds = new HashSet<>(selectedConcept == null ? Set.of() :
-            selectedConcept.getKeywords().stream().map(Keyword::getId).collect(Collectors.toSet()));
-
-        ListView<Keyword> keywordsListView = new ListView<>(FXCollections.observableArrayList(allKeywords));
-        keywordsListView.setCellFactory(lv -> new ListCell<>() {
-            private final CheckBox checkBox = new CheckBox();
-            {
-                setGraphic(checkBox);
-                checkBox.setDisable(!isEditMode);
-                checkBox.setOnAction(e -> {
-                    if (getItem() != null) {
-                        if (checkBox.isSelected()) selectedIds.add(getItem().getId());
-                        else selectedIds.remove(getItem().getId());
-                    }
-                });
-            }
-            @Override
-            protected void updateItem(Keyword item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) { setText(null); checkBox.setVisible(false); }
-                else { setText(item.getValue()); checkBox.setVisible(true); checkBox.setSelected(selectedIds.contains(item.getId())); }
-            }
-        });
-        keywordsListView.setPrefHeight(120);
+        Set<String> initialIds = selectedConcept == null ? Set.of() :
+            selectedConcept.getKeywords().stream().map(Keyword::getId).collect(Collectors.toSet());
+        FilterableMultiSelectBox<Keyword> keywordsBox = new FilterableMultiSelectBox<>(
+            allKeywords, initialIds, Keyword::getValue, Keyword::getId, isEditMode);
 
         VBox content = new VBox(10,
             new Label("Value:"), valueField,
-            new Label("Keywords:"), keywordsListView);
+            new Label("Keywords:"), keywordsBox);
         content.setPadding(new Insets(15));
         detailView.getChildren().add(new ScrollPane(content));
 
         HBox buttonBox = new HBox(10);
         if (isEditMode) {
             Button saveBtn = new Button("Save");
-            saveBtn.setOnAction(e -> saveConcept(valueField, keywordsListView, selectedIds));
+            saveBtn.setOnAction(e -> saveConcept(valueField, keywordsBox));
             Button cancelBtn = new Button("Cancel");
             cancelBtn.setOnAction(e -> { isEditMode = false; refreshDetailView(); });
             buttonBox.getChildren().addAll(saveBtn, cancelBtn);
@@ -172,9 +151,10 @@ public class ConceptListView {
         detailView.getChildren().addAll(new Separator(), buttonBox);
     }
 
-    private void saveConcept(TextField valueField, ListView<Keyword> keywordsListView, Set<String> selectedIds) {
+    private void saveConcept(TextField valueField, FilterableMultiSelectBox<Keyword> keywordsBox) {
         Concept result = selectedConcept == null ? new Concept() : selectedConcept;
         result.setValue(valueField.getText());
+        Set<String> selectedIds = keywordsBox.getSelectedIds();
         List<Keyword> allKeywords = keywordController.findAll();
         result.setKeywords(allKeywords.stream()
             .filter(k -> selectedIds.contains(k.getId()))

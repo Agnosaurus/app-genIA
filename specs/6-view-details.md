@@ -1,15 +1,16 @@
+# In this file, everything applies to every Entity except Keyword, Concept and SubKeyword
+
+
 # View details
 -**For each entity, we need a List view, a Read view, and a Edit/Create view.**
 -**The Read/Edit/Create could be the same display, except it is editable and display the actual fields values**
 -**Every view take the same size on the screen, no additional pop up window**
+-** List / Read / Edit/ create view needed for the "Concept/Keyword". Content will be specified later, please create empty view and the button to go there
 
 
 # List View details
 -**For every List view, we need to display a few columns for each object, details below**
 -**Author List : firstName, lastName**
--**Concept List : name, keywords.value**
--**Keyword List : value**
-
 -**Language List : name**
 -**Manuscript List : uniqueId, titre, language, referenceManuscript**
 -**Name List : name**

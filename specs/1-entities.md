@@ -34,6 +34,27 @@ public class Keyword {
     private String id;
 
     private String value;
+
+    @DBRef
+    private Set<SubKeyword> childSubKeywords = new HashSet<>();
+
+    @DBRef
+    private Concept parentConcept;
+}
+
+
+
+# SubKeyword entity
+@Document(collection = "subkeyword")
+public class SubKeyword {
+
+    @Id
+    private String id;
+
+    private String value;
+
+    @DBRef
+    private Keyword parentKeyword;
 }
 
 # Language entity

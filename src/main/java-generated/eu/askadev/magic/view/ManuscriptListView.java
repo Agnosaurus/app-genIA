@@ -16,7 +16,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -161,29 +160,12 @@ public class ManuscriptListView {
         }
 
         List<Author> allAuthors = authorController.findAll();
-        Set<String> selectedAuthorIds = new HashSet<>(selectedManuscript == null || selectedManuscript.getAuthors() == null ? Set.of() :
-            selectedManuscript.getAuthors().stream().map(Author::getId).collect(Collectors.toSet()));
-
-        ListView<Author> authorsListView = new ListView<>(FXCollections.observableArrayList(allAuthors));
-        authorsListView.setCellFactory(lv -> new ListCell<>() {
-            private final CheckBox checkBox = new CheckBox();
-            {
-                setGraphic(checkBox);
-                checkBox.setDisable(!isEditMode);
-                checkBox.setOnAction(e -> {
-                    if (getItem() != null) {
-                        if (checkBox.isSelected()) selectedAuthorIds.add(getItem().getId());
-                        else selectedAuthorIds.remove(getItem().getId());
-                    }
-                });
-            }
-            @Override protected void updateItem(Author item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) { setText(null); checkBox.setVisible(false); }
-                else { setText(item.getFirstName() + " " + item.getLastName()); checkBox.setVisible(true); checkBox.setSelected(selectedAuthorIds.contains(item.getId())); }
-            }
-        });
-        authorsListView.setPrefHeight(120);
+        Set<String> initialAuthorIds = selectedManuscript == null || selectedManuscript.getAuthors() == null ? Set.of() :
+            selectedManuscript.getAuthors().stream().map(Author::getId).collect(Collectors.toSet());
+        FilterableMultiSelectBox<Author> authorsBox = new FilterableMultiSelectBox<>(
+            allAuthors, initialAuthorIds,
+            a -> a.getFirstName() + " " + a.getLastName(),
+            Author::getId, isEditMode);
 
         VBox content = new VBox(10,
             new Label("Unique ID:"), uniqueIdField,
@@ -193,14 +175,14 @@ public class ManuscriptListView {
             new Label("Date:"), dateField,
             new Label("Scriptorium:"), scriptoriumField,
             new Label("Language:"), languageCombo,
-            new Label("Authors:"), authorsListView);
+            new Label("Authors:"), authorsBox);
         content.setPadding(new Insets(15));
         detailView.getChildren().add(new ScrollPane(content));
 
         HBox buttonBox = new HBox(10);
         if (isEditMode) {
             Button saveBtn = new Button("Save");
-            saveBtn.setOnAction(e -> saveManuscript(uniqueIdField, titreField, refField, lieuField, dateField, scriptoriumField, languageCombo, allAuthors, selectedAuthorIds));
+            saveBtn.setOnAction(e -> saveManuscript(uniqueIdField, titreField, refField, lieuField, dateField, scriptoriumField, languageCombo, allAuthors, authorsBox.getSelectedIds()));
             Button cancelBtn = new Button("Cancel");
             cancelBtn.setOnAction(e -> { isEditMode = false; refreshDetailView(); });
             buttonBox.getChildren().addAll(saveBtn, cancelBtn);
